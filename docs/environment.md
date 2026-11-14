@@ -94,6 +94,24 @@ list fails closed.** Parsed on demand. `packages/auth/src/workspace.ts`.
 - **`isMarketing()` (`apps/app/lib/env.ts`) reads per request**, so a config change
   needs no rebuild. Declared in `apps/app/turbo.json` `passThroughEnv`.
 
+## `BRAND_*` — white-label branding, neutral by default
+
+`BRAND_NAME`, `BRAND_LOGO_URL`, `BRAND_FAVICON_URL`, `BRAND_PRIMARY_COLOR` and
+`BRAND_HOME_URL` rebrand one install. `.env.example` describes each value.
+
+- **One parser.** `readBrand()` in `packages/validation/src/brand.ts` reads all five.
+  The app, the API, the agent and `@crm/auth` call it. Nothing reads a `BRAND_*`
+  variable directly.
+- **Unset is neutral.** The name falls back to `CRM` and the mark to the default logo.
+- **Malformed throws.** A colour that is not `#rrggbb`, or a URL that is not absolute
+  and not a `/` path, throws `InvalidBrand` with the variable name.
+- **The colour is a token override.** `brandStylesheet()` writes `--primary`,
+  `--ring` and their sidebar twins for both themes into the root layout. No component
+  reads the colour.
+- **Client components read `useBrand()`** from `apps/app/components/brand-provider.tsx`.
+  The root layout passes the parsed brand in as plain data.
+- **Declared in `turbo.json` `globalEnv`**, so a brand change invalidates cached builds.
+
 ## Typed, validated env
 
 `apps/api/src/config/env.validation.ts` runs via `ConfigModule.forRoot({ validate })`,

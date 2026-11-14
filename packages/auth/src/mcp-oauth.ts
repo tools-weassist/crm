@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { safeFetch } from "@crm/db/safe-fetch";
 import type { Vendor } from "@crm/mcp-integrations/vendor";
+import { readBrand } from "@crm/validation/brand";
 import { z } from "zod";
 import { MCP_AUTH } from "./mcp-config";
 
@@ -303,7 +304,7 @@ export class McpOAuthClient {
 				"content-type": "application/json",
 			},
 			body: JSON.stringify({
-				client_name: "Comp AI CRM",
+				client_name: readBrand().name,
 				redirect_uris: [redirectUri],
 				grant_types: ["authorization_code", "refresh_token"],
 				response_types: ["code"],

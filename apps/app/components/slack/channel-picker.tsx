@@ -5,6 +5,7 @@ import Locked from "@carbon/icons-react/es/Locked";
 import { Button } from "@crm/ui/components/button";
 import { Icon } from "@crm/ui/components/icon";
 import { cn } from "@crm/ui/lib/utils";
+import { useBrand } from "@/components/brand-provider";
 
 export type PickerChannel = {
 	id: string;
@@ -35,6 +36,7 @@ export function ChannelPicker({
 	pending?: boolean;
 	value?: string | null;
 }) {
+	const brand = useBrand();
 	return (
 		<div className="flex flex-col divide-y overflow-hidden rounded-lg border">
 			{channels.length === 0 ? empty : null}
@@ -83,7 +85,7 @@ export function ChannelPicker({
 								{channel.name}
 							</span>
 							<span className="text-muted-foreground text-xs">
-								{describe(channel, canInviteItself)}
+								{describe(channel, canInviteItself, brand.name)}
 							</span>
 						</span>
 
@@ -121,15 +123,19 @@ export function ChannelPicker({
 	);
 }
 
-function describe(channel: PickerChannel, canInviteItself: boolean): string {
+function describe(
+	channel: PickerChannel,
+	canInviteItself: boolean,
+	botName: string,
+): string {
 	const people =
 		channel.memberCount === null ? "" : ` · ${channel.memberCount} people`;
 
-	if (channel.isMember) return `Comp AI is in${people}`;
+	if (channel.isMember) return `${botName} is in${people}`;
 	if (!channel.classified) return `Not read from Slack yet${people}`;
-	if (!channel.isPrivate) return `Comp AI can join this one${people}`;
-	if (canInviteItself) return `Private. Comp AI joins as you${people}`;
+	if (!channel.isPrivate) return `${botName} can join this one${people}`;
+	if (canInviteItself) return `Private. ${botName} joins as you${people}`;
 	if (channel.inviteRequestedAt)
 		return `Private. Waiting on an invite${people}`;
-	return `Private. Someone inside has to invite Comp AI${people}`;
+	return `Private. Someone inside has to invite ${botName}${people}`;
 }

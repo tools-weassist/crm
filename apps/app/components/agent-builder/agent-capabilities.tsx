@@ -16,6 +16,7 @@ import { Switch } from "@crm/ui/components/switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useBrand } from "@/components/brand-provider";
 import {
 	ChannelPicker,
 	type PickerChannel,
@@ -47,6 +48,7 @@ export function AgentCapabilities({
 	canManage: boolean;
 	capabilities: Capabilities;
 }) {
+	const brand = useBrand();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 
@@ -83,7 +85,7 @@ export function AgentCapabilities({
 		trpc.slack.joinChannel.mutationOptions({
 			onSuccess: async () => {
 				await channels.reload();
-				toast.success("Asked someone to invite Comp AI.");
+				toast.success(`Asked someone to invite ${brand.name}.`);
 			},
 			onError: (error) => toast.error(error.message),
 		}),
@@ -166,7 +168,7 @@ export function AgentCapabilities({
 							</CreateChannelDialog>
 						) : null
 					}
-					summary="One channel. Comp AI joins it when you save."
+					summary={`One channel. ${brand.name} joins it when you save.`}
 					title="Lives in"
 				>
 					<ChannelPicker
@@ -314,7 +316,7 @@ export function AgentCapabilities({
 				description={
 					blocked ??
 					(channelChanged
-						? `Comp AI joins #${to}. It stays in #${from} until you remove it.`
+						? `${brand.name} joins #${to}. It stays in #${from} until you remove it.`
 						: "The old version stays in the history.")
 				}
 				open={dirty}

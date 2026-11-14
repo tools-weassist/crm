@@ -1,7 +1,14 @@
 {
 	"$schema": "https://turborepo.dev/schema.json",
 	"ui": "tui",
-	"globalEnv": ["NODE_ENV"],
+	"globalEnv": [
+		"NODE_ENV",
+		"BRAND_NAME",
+		"BRAND_LOGO_URL",
+		"BRAND_FAVICON_URL",
+		"BRAND_PRIMARY_COLOR",
+		"BRAND_HOME_URL"
+	],
 	"globalPassThroughEnv": [
 		"DATABASE_URL",
 		"DATABASE_URL_UNPOOLED",

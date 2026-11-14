@@ -1,5 +1,6 @@
 import { db } from "@crm/db";
 import { schemas } from "@crm/validation";
+import { readBrand } from "@crm/validation/brand";
 import { z } from "zod";
 import { SLACK } from "./slack-config";
 import { slackAccessToken, slackUserToken } from "./slack-connection";
@@ -203,20 +204,22 @@ function needsHuman(error: string): boolean {
 }
 
 function explain(error: string): string {
+	const { name } = readBrand();
+
 	switch (error) {
 		case "no_user_grant":
-			return "This workspace did not grant Comp AI permission to add itself to a private channel.";
+			return `This workspace did not grant ${name} permission to add itself to a private channel.`;
 		case "channel_not_found":
-			return "Slack cannot see this channel. A member has to invite Comp AI.";
+			return `Slack cannot see this channel. A member has to invite ${name}.`;
 		case "is_archived":
-			return "This channel is archived. Somebody has to unarchive it before Comp AI can join.";
+			return `This channel is archived. Somebody has to unarchive it before ${name} can join.`;
 		case "missing_scope":
 			return "Slack refused: a permission is missing. Reconnect Slack.";
 		case "invalid_auth":
 		case "token_revoked":
 			return "Slack needs to be reconnected.";
 		case "unknown_bot_user":
-			return "Slack did not report which user Comp AI is.";
+			return `Slack did not report which user ${name} is.`;
 		default:
 			return `Slack refused the request (${error}).`;
 	}
@@ -233,7 +236,7 @@ export async function createSlackChannel(
 	if (!token) {
 		return {
 			error: isPrivate
-				? "This workspace did not grant Comp AI permission to create a private channel."
+				? `This workspace did not grant ${readBrand().name} permission to create a private channel.`
 				: "Slack is not connected.",
 		};
 	}

@@ -1,6 +1,6 @@
 import { type Handoff, schemas } from "@crm/validation";
 
-export function handoffResources(handoff: Handoff) {
+export function handoffResources(handoff: Handoff, botName: string) {
 	return [
 		{
 			kind: "integration" as const,
@@ -15,8 +15,8 @@ export function handoffResources(handoff: Handoff) {
 						id: `slack:channel:${handoff.channel.id}`,
 						label: `#${handoff.channel.name}`,
 						detail: handoff.channel.isMember
-							? "Comp AI is a member"
-							: "Comp AI is not in this channel yet",
+							? `${botName} is a member`
+							: `${botName} is not in this channel yet`,
 					},
 				]
 			: []),
