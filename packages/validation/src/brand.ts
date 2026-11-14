@@ -16,14 +16,14 @@ export const BRAND_DEFAULTS = {
 	darkForeground: "#171717",
 } as const;
 
-const blankToUndefined = (value: unknown) =>
-	typeof value === "string" && value.trim() === "" ? undefined : value;
+const blank = z
+	.string()
+	.optional()
+	.transform((value) => value?.trim() || undefined);
 
-const brandUrl = z.preprocess(
-	blankToUndefined,
+const brandUrl = blank.pipe(
 	z
 		.string()
-		.trim()
 		.refine(
 			(value) => value.startsWith("/") || URL.canParse(value),
 			"must be an absolute URL or a path that starts with /",
@@ -32,17 +32,12 @@ const brandUrl = z.preprocess(
 );
 
 export const brand = z.object({
-	name: z.preprocess(
-		blankToUndefined,
-		z.string().trim().min(1).max(60).default(BRAND_DEFAULTS.name),
-	),
+	name: blank.pipe(z.string().max(60).default(BRAND_DEFAULTS.name)),
 	logoUrl: brandUrl,
 	faviconUrl: brandUrl,
-	primaryColor: z.preprocess(
-		blankToUndefined,
+	primaryColor: blank.pipe(
 		z
 			.string()
-			.trim()
 			.regex(/^#[0-9a-fA-F]{6}$/, "must be a six-digit hex colour like #1a73e8")
 			.transform((value) => value.toLowerCase())
 			.optional(),
