@@ -379,6 +379,12 @@ redirect URIs. Set `CRON_SECRET` and point a scheduler at
 the generator needs a newer GLIBC than most build images have. Regenerate locally and
 commit it with the router change that caused it.
 
+### White-label instances
+
+Each client gets its own deployment with its own brand. `bun run instance:new`
+writes the variables and a setup checklist; [docs/white-label.md](./docs/white-label.md)
+has the details.
+
 ## Contributing
 
 We'd rather have a paragraph you wrote than a pull request an agent wrote. See

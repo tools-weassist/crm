@@ -9,6 +9,7 @@ context until you read them, and the rules in them are not optional.
 | Anything in `apps/api` — tRPC, auth, logging, sync, deletes, caching | `docs/api.md` |
 | `apps/agent` — the eve research agent, tools, tasks, dispatch | `docs/agent.md` |
 | `.env`, configuration, which variables exist and why | `docs/environment.md` |
+| Branding, `instance:new`, per-client deployments | `docs/white-label.md` |
 | UI in `apps/app` or `packages/ui` | `docs/design.md` (below) |
 | Deal amounts, totals, charts, exchange rates | `docs/currency.md` |
 | The record sheet's Agent tab | `docs/agent-panel.md` |
