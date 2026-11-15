@@ -29,13 +29,13 @@ describe("workspace web policy", () => {
 	});
 
 	test("allows an approved documentation entry page", () => {
-		expect(webFetchAllowed("https://trycomp.ai/#product", [])).toBe(true);
+		expect(webFetchAllowed("https://www.iso.org/#standards", [])).toBe(true);
 		expect(approvedDocumentationUrls).toContain("https://linear.app/");
 	});
 
 	test("rejects an unapproved path and query", () => {
 		expect(webFetchAllowed("https://example.com/private", [])).toBe(false);
-		expect(webFetchAllowed("https://trycomp.ai/?secret=value", [])).toBe(false);
+		expect(webFetchAllowed("https://www.iso.org/?secret=value", [])).toBe(false);
 	});
 
 	test("rejects local, insecure, and credentialed links", () => {
