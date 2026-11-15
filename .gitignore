@@ -11,6 +11,9 @@ node_modules
 .env.*
 !.env.example
 
+# Per-client instance secrets from `bun run instance:new`.
+instances/
+
 # Testing
 coverage
 

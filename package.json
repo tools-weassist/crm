@@ -22,15 +22,18 @@
 		"db:reset": "turbo run db:reset",
 		"db:seed": "turbo run db:seed",
 		"db:studio": "turbo run db:studio",
-		"db:test": "bun --env-file=.env run --filter=@crm/db db:test"
+		"db:test": "bun --env-file=.env run --filter=@crm/db db:test",
+		"instance:new": "bun tools/instance/new-instance.ts"
 	},
 	"devDependencies": {
+		"@crm/validation": "workspace:*",
 		"@biomejs/biome": "^2.5.15",
 		"@oxlint/plugins": "1.89.0",
 		"knip": "6.42.1",
 		"turbo": "^2.11.9",
 		"typescript": "5.9.2",
-		"vite-plus": "catalog:"
+		"vite-plus": "catalog:",
+		"zod": "^4.4.3"
 	},
 	"engines": {
 		"node": ">=22"

@@ -6,11 +6,13 @@
       "name": "crm",
       "devDependencies": {
         "@biomejs/biome": "^2.5.15",
+        "@crm/validation": "workspace:*",
         "@oxlint/plugins": "1.89.0",
         "knip": "6.42.1",
         "turbo": "^2.11.9",
         "typescript": "5.9.2",
         "vite-plus": "catalog:",
+        "zod": "^4.4.3",
       },
     },
     "apps/agent": {

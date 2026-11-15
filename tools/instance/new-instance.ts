@@ -1,0 +1,205 @@
+import { randomBytes } from "node:crypto";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
+import { BRAND_ENV, readBrand } from "@crm/validation/brand";
+import { z } from "zod";
+import { INSTANCE } from "./instance-config";
+
+const origin = z
+	.string()
+	.trim()
+	.refine(URL.canParse, "must be a full URL such as https://crm.example.com")
+	.transform((value) => new URL(value).origin);
+
+const instanceArgs = z.object({
+	slug: z
+		.string()
+		.trim()
+		.regex(/^[a-z0-9-]+$/, "must be lowercase letters, digits and dashes"),
+	appUrl: origin,
+	apiUrl: origin,
+	agentUrl: origin,
+	allowedSignIn: z.string().trim().min(1),
+	brandName: z.string().optional(),
+	brandLogoUrl: z.string().optional(),
+	brandFaviconUrl: z.string().optional(),
+	brandPrimaryColor: z.string().optional(),
+	brandHomeUrl: z.string().optional(),
+	force: z.boolean().default(false),
+});
+
+type InstanceArgs = z.infer<typeof instanceArgs>;
+
+const { values } = parseArgs({
+	options: {
+		slug: { type: "string" },
+		"app-url": { type: "string" },
+		"api-url": { type: "string" },
+		"agent-url": { type: "string" },
+		"allowed-sign-in": { type: "string" },
+		"brand-name": { type: "string" },
+		"brand-logo-url": { type: "string" },
+		"brand-favicon-url": { type: "string" },
+		"brand-primary-color": { type: "string" },
+		"brand-home-url": { type: "string" },
+		force: { type: "boolean" },
+	},
+});
+
+const parsed = instanceArgs.safeParse({
+	slug: values.slug,
+	appUrl: values["app-url"],
+	apiUrl: values["api-url"],
+	agentUrl: values["agent-url"],
+	allowedSignIn: values["allowed-sign-in"],
+	brandName: values["brand-name"],
+	brandLogoUrl: values["brand-logo-url"],
+	brandFaviconUrl: values["brand-favicon-url"],
+	brandPrimaryColor: values["brand-primary-color"],
+	brandHomeUrl: values["brand-home-url"],
+	force: values.force,
+});
+
+if (!parsed.success) {
+	console.error(z.prettifyError(parsed.error));
+	console.error(`\n${INSTANCE.usage}`);
+	process.exit(1);
+}
+
+const args = parsed.data;
+
+const brandEnv = {
+	[BRAND_ENV.name]: args.brandName,
+	[BRAND_ENV.logoUrl]: args.brandLogoUrl,
+	[BRAND_ENV.faviconUrl]: args.brandFaviconUrl,
+	[BRAND_ENV.primaryColor]: args.brandPrimaryColor,
+	[BRAND_ENV.homeUrl]: args.brandHomeUrl,
+};
+const brand = readBrand(brandEnv);
+
+const repoRoot = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
+const outDir = join(repoRoot, INSTANCE.outputDir, args.slug);
+const envPath = join(outDir, INSTANCE.envFile);
+const checklistPath = join(outDir, INSTANCE.checklistFile);
+
+if (existsSync(envPath) && !args.force) {
+	console.error(
+		`${envPath} exists. It holds this instance's secrets. Pass --force to replace them.`,
+	);
+	process.exit(1);
+}
+
+const secret = () => randomBytes(INSTANCE.secretBytes).toString("base64");
+
+const variables: [string, string][] = [
+	["DATABASE_URL", INSTANCE.placeholder],
+	["BETTER_AUTH_SECRET", secret()],
+	["ALLOWED_SIGN_IN", args.allowedSignIn],
+	["GOOGLE_CLIENT_ID", INSTANCE.placeholder],
+	["GOOGLE_CLIENT_SECRET", INSTANCE.placeholder],
+	["API_URL", args.apiUrl],
+	["APP_URL", args.appUrl],
+	["AGENT_URL", args.agentUrl],
+	["AGENT_BRIDGE_SECRET", secret()],
+	["MCP_ENCRYPTION_KEY", secret()],
+	["CHAT_EVENT_ENCRYPTION_KEY", secret()],
+	["CRON_SECRET", randomBytes(INSTANCE.secretBytes).toString("hex")],
+	["CRM_TELEMETRY_DISABLED", "1"],
+	[BRAND_ENV.name, brand.name],
+];
+
+const cookieDomain = sharedParentDomain(args.appUrl, args.apiUrl);
+if (cookieDomain) variables.push(["AUTH_COOKIE_DOMAIN", cookieDomain]);
+
+for (const [key, value] of [
+	[BRAND_ENV.logoUrl, brand.logoUrl],
+	[BRAND_ENV.faviconUrl, brand.faviconUrl],
+	[BRAND_ENV.primaryColor, brand.primaryColor],
+	[BRAND_ENV.homeUrl, brand.homeUrl],
+] as const) {
+	if (value) variables.push([key, value]);
+}
+
+mkdirSync(outDir, { recursive: true });
+writeFileSync(
+	envPath,
+	`${variables.map(([key, value]) => `${key}="${value}"`).join("\n")}\n`,
+	{ mode: 0o600 },
+);
+writeFileSync(checklistPath, checklist(args, brand.name, cookieDomain));
+
+console.log(`Wrote ${envPath}`);
+console.log(`Wrote ${checklistPath}`);
+console.log(
+	`Replace every "${INSTANCE.placeholder}" value, then follow the checklist.`,
+);
+
+function sharedParentDomain(first: string, second: string): string | null {
+	const a = new URL(first).hostname.split(".");
+	const b = new URL(second).hostname.split(".");
+	if (a.join(".") === b.join(".")) return null;
+
+	const shared: string[] = [];
+	while (a.length && b.length && a.at(-1) === b.at(-1)) {
+		shared.unshift(a.pop() ?? "");
+		b.pop();
+	}
+
+	return shared.length >= INSTANCE.minimumParentLabels
+		? `.${shared.join(".")}`
+		: null;
+}
+
+function checklist(
+	instance: InstanceArgs,
+	name: string,
+	cookie: string | null,
+): string {
+	return `# ${name} — instance checklist
+
+Generated by \`bun run instance:new\`. \`${INSTANCE.envFile}\` beside this file holds
+the secrets for this instance. Keep it out of git and out of chat.
+
+## 1. Database
+
+- [ ] Create a Postgres database (Neon through the Vercel Marketplace works).
+- [ ] Put its pooled URL in \`DATABASE_URL\`. If that URL is a pooler, add the
+      direct URL as \`DIRECT_DATABASE_URL\`.
+
+## 2. Google OAuth client
+
+In the Google Cloud console of the Workspace that signs in:
+
+- [ ] Create a project, or pick one.
+- [ ] Enable the Gmail API and the Google Calendar API.
+- [ ] OAuth consent screen: User type **Internal**.
+- [ ] Credentials → Create credentials → OAuth client ID → Web application.
+- [ ] Authorised JavaScript origin: \`${instance.appUrl}\`
+- [ ] Authorised redirect URI: \`${instance.apiUrl}/api/auth/callback/google\`
+- [ ] Put the client ID and secret in \`GOOGLE_CLIENT_ID\` and \`GOOGLE_CLIENT_SECRET\`.
+
+## 3. Vercel
+
+Create three projects from this repository. All three get every variable in
+\`${INSTANCE.envFile}\` (Settings → Environment Variables → Import .env).
+
+| Project | Root Directory | Build Command | Domain |
+| --- | --- | --- | --- |
+| ${instance.slug}-app | \`apps/app\` | default (Next.js) | \`${instance.appUrl}\` |
+| ${instance.slug}-api | \`.\` (repo root) | \`bun apps/api/scripts/build-func.mjs\` | \`${instance.apiUrl}\` |
+| ${instance.slug}-agent | \`apps/agent\` | default (\`eve build\`) | \`${instance.agentUrl}\` |
+
+- [ ] Set the production branch of each project to \`release\`.
+- [ ] Add each domain and point its DNS at Vercel.
+- [ ] Deploy the API first. Its production build applies the database migrations.
+- [ ] Deploy the agent, then the app.
+${cookie ? `- [ ] \`AUTH_COOKIE_DOMAIN\` is \`${cookie}\`, so one session cookie covers the app and the API.\n` : ""}
+## 4. First sign-in
+
+- [ ] Open \`${instance.appUrl}\` and sign in with an account allowed by \`ALLOWED_SIGN_IN\`.
+- [ ] Finish onboarding. The first person to sign in owns the workspace.
+- [ ] Check the header shows the ${name} brand.
+`;
+}
