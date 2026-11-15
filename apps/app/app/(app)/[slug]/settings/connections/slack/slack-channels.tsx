@@ -23,6 +23,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
 import { toast } from "sonner";
+import { useBrand } from "@/components/brand-provider";
 import {
 	ChannelPicker,
 	type PickerChannel,
@@ -30,9 +31,8 @@ import {
 import { useSlackChannels } from "@/components/slack/use-slack-channels";
 import { useTRPC } from "@/lib/trpc/client";
 
-const INVITE_COMMAND = "/invite @Comp AI";
-
 export function SlackChannels() {
+	const brand = useBrand();
 	const trpc = useTRPC();
 	const [asking, setAsking] = useState<PickerChannel | null>(null);
 	const [query, setQuery] = useState("");
@@ -45,10 +45,10 @@ export function SlackChannels() {
 				setAsking(null);
 				toast.success(
 					result.alreadyJoined
-						? "Comp AI is already in there."
+						? `${brand.name} is already in there.`
 						: result.queued
-							? "Comp AI is joining."
-							: "Ask someone inside to invite Comp AI.",
+							? `${brand.name} is joining.`
+							: `Ask someone inside to invite ${brand.name}.`,
 				);
 			},
 			onError: (error) => toast.error(error.message),
@@ -75,7 +75,9 @@ export function SlackChannels() {
 		<section className="flex flex-col gap-3 px-(--spacing-block-inline)">
 			<div className="flex items-end justify-between gap-4">
 				<div>
-					<h2 className="font-medium text-sm">Channels Comp AI can reach</h2>
+					<h2 className="font-medium text-sm">
+						Channels {brand.name} can reach
+					</h2>
 					<p className="text-muted-foreground text-xs">
 						Agents pick from this list.
 					</p>
@@ -92,7 +94,8 @@ export function SlackChannels() {
 
 			{channels.stalled ? (
 				<p className="text-warning text-xs">
-					Comp AI is not reading Slack right now. The list can be out of date.
+					{brand.name} is not reading Slack right now. The list can be out of
+					date.
 				</p>
 			) : null}
 
@@ -118,7 +121,7 @@ export function SlackChannels() {
 							? "Reading the channel list from Slack…"
 							: query
 								? `No channel matches “${query}”.`
-								: "No channels yet. Comp AI reads the list from Slack after it connects."}
+								: `No channels yet. ${brand.name} reads the list from Slack after it connects.`}
 					</p>
 				}
 				onAdd={(channel) => void joinAction.run(channel.id)}
@@ -161,11 +164,13 @@ function AskDialog({
 	onConfirm: () => void;
 	status: "idle" | "pending" | "success" | "error";
 }) {
+	const brand = useBrand();
+	const inviteCommand = `/invite @${brand.name}`;
 	if (!channel) return null;
 
 	async function copyThenConfirm() {
 		try {
-			await navigator.clipboard.writeText(INVITE_COMMAND);
+			await navigator.clipboard.writeText(inviteCommand);
 		} catch {
 			toast.error("Copying failed. Copy the command above by hand.");
 			return;
@@ -181,19 +186,19 @@ function AskDialog({
 				<AlertDialogHeader>
 					<AlertDialogTitle>
 						{canInviteItself
-							? `Add Comp AI to #${channel.name}?`
-							: "Ask someone to add Comp AI"}
+							? `Add ${brand.name} to #${channel.name}?`
+							: `Ask someone to add ${brand.name}`}
 					</AlertDialogTitle>
 					<AlertDialogDescription>
 						{canInviteItself
-							? `It is a private channel, so Comp AI joins as you. Same as typing the invite yourself. Everyone in the channel sees it join. It reads nothing until you turn a permission on.`
-							: `We cannot add Comp AI to a private channel yet. Someone already in #${channel.name} has to run this.`}
+							? `It is a private channel, so ${brand.name} joins as you. Same as typing the invite yourself. Everyone in the channel sees it join. It reads nothing until you turn a permission on.`
+							: `We cannot add ${brand.name} to a private channel yet. Someone already in #${channel.name} has to run this.`}
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 
 				{canInviteItself ? null : (
 					<div className="rounded-md bg-muted px-3 py-2.5 font-mono text-sm">
-						{INVITE_COMMAND}
+						{inviteCommand}
 					</div>
 				)}
 
@@ -206,7 +211,7 @@ function AskDialog({
 						onClick={canInviteItself ? onConfirm : () => void copyThenConfirm()}
 					>
 						<AsyncButtonContent pendingLabel="Adding…" status={status}>
-							{canInviteItself ? "Add Comp AI" : "Copy and mark as asked"}
+							{canInviteItself ? `Add ${brand.name}` : "Copy and mark as asked"}
 						</AsyncButtonContent>
 					</Button>
 				</AlertDialogFooter>

@@ -22,6 +22,7 @@ import { cn } from "@crm/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useBrand } from "@/components/brand-provider";
 import { useTRPC } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/lib/use-workspace-url";
 
@@ -32,6 +33,7 @@ export function ShareChatDialog({
 	conversationId: string;
 	title: string;
 }) {
+	const brand = useBrand();
 	const trpc = useTRPC();
 	const workspaceUrl = useWorkspaceUrl();
 	const queryClient = useQueryClient();
@@ -173,7 +175,7 @@ export function ShareChatDialog({
 							/>
 							<ShareChoice
 								selected={shared === true}
-								label="Anyone in Comp AI with the link"
+								label={`Anyone in ${brand.name} with the link`}
 								detail="Read-only"
 								disabled={createAction.pending || revokeAction.pending}
 								onSelect={() => {

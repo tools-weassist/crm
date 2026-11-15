@@ -142,6 +142,29 @@ export class EnvironmentVariables {
 	@IsOptional()
 	@IsString()
 	CRM_TELEMETRY_DISABLED?: string;
+
+	@IsOptional()
+	@IsString()
+	BRAND_NAME?: string;
+
+	@IsOptional()
+	@IsString()
+	BRAND_LOGO_URL?: string;
+
+	@IsOptional()
+	@IsString()
+	BRAND_FAVICON_URL?: string;
+
+	@IsOptional()
+	@IsString()
+	@Matches(/^(#[0-9a-fA-F]{6})?$/, {
+		message: "BRAND_PRIMARY_COLOR must be a six-digit hex colour like #1a73e8.",
+	})
+	BRAND_PRIMARY_COLOR?: string;
+
+	@IsOptional()
+	@IsString()
+	BRAND_HOME_URL?: string;
 }
 
 export type RawEnvironment = Record<string, string | undefined>;

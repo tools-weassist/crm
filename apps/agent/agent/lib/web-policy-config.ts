@@ -1,7 +1,5 @@
 export const WEB_POLICY = {
 	documentationEntryUrls: [
-		"https://comp-neo.ai/docs",
-		"https://trycomp.ai/",
 		"https://csrc.nist.gov/pubs/sp/800/53/r5/final",
 		"https://www.iso.org/",
 		"https://www.aicpa-cima.com/",

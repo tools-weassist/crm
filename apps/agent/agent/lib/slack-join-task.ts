@@ -1,5 +1,6 @@
 import type { Prisma } from "@crm/db";
 import { parse, schemas } from "@crm/validation";
+import { readBrand } from "@crm/validation/brand";
 import { joinSlackChannel } from "./slack-membership";
 
 export async function runSlackChannelJoin(
@@ -11,12 +12,13 @@ export async function runSlackChannelJoin(
 		"A slack-channel-join task carries an unreadable payload",
 	);
 	const outcome = await joinSlackChannel(channelId);
+	const { name } = readBrand();
 
 	if (outcome.joined) {
 		return outcome.already
-			? `Comp AI was already in #${channelName}.`
-			: `Comp AI joined #${channelName}.`;
+			? `${name} was already in #${channelName}.`
+			: `${name} joined #${channelName}.`;
 	}
 
-	return `Comp AI could not join #${channelName}. ${outcome.reason}`;
+	return `${name} could not join #${channelName}. ${outcome.reason}`;
 }

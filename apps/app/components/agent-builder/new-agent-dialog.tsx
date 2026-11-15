@@ -27,12 +27,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useBrand } from "@/components/brand-provider";
 import { useSlackChannels } from "@/components/slack/use-slack-channels";
 import { handoffBrief, handoffResources } from "@/lib/agent-handoff";
 import { useTRPC } from "@/lib/trpc/client";
 import { useWorkspaceUrl } from "@/lib/use-workspace-url";
 
 export function NewAgentDialog({ children }: { children: React.ReactNode }) {
+	const brand = useBrand();
 	const router = useRouter();
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
@@ -88,7 +90,7 @@ export function NewAgentDialog({ children }: { children: React.ReactNode }) {
 				clientRequestId: crypto.randomUUID(),
 				commandType: "CREATE_AGENT",
 				message: handoffBrief(handoff),
-				resources: handoffResources(handoff),
+				resources: handoffResources(handoff, brand.name),
 				attachments: [],
 			});
 		} catch (error) {
@@ -152,8 +154,8 @@ export function NewAgentDialog({ children }: { children: React.ReactNode }) {
 						<p className="text-muted-foreground text-xs">
 							{channel
 								? channel.isMember
-									? `Comp AI is already in #${channel.name}.`
-									: `Comp AI is not in #${channel.name} yet. It joins when you create this.`
+									? `${brand.name} is already in #${channel.name}.`
+									: `${brand.name} is not in #${channel.name} yet. It joins when you create this.`
 								: "Leave this empty and the builder will ask."}
 						</p>
 					</div>
