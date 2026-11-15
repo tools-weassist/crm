@@ -35,7 +35,9 @@ describe("workspace web policy", () => {
 
 	test("rejects an unapproved path and query", () => {
 		expect(webFetchAllowed("https://example.com/private", [])).toBe(false);
-		expect(webFetchAllowed("https://www.iso.org/?secret=value", [])).toBe(false);
+		expect(webFetchAllowed("https://www.iso.org/?secret=value", [])).toBe(
+			false,
+		);
 	});
 
 	test("rejects local, insecure, and credentialed links", () => {
